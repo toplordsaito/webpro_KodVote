@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h1 class="text-center">{{title}}</h1>
+<a href="{% url 'poll_create' %}">create</a>
+<div class="card-deck">
+    {% for poll in polls %}
+    <div class="col-4 mb-4">
+        <div class="card">
+            {% if poll.picture %}
+            <!-- <img class="card-img-top" src="{{poll.picture}}" alt=""> -->
+            {% load static %}
+            <img src="{% static '' %}{{poll.picture}}" class="card-img-top" alt="...">
+            <!-- <img src="{% static 'images/poll/images.jpg' %}" class="card-img-top" alt="..."> -->
+            {% else %}
+            <img src="https://lh3.googleusercontent.com/proxy/TtZeaGXagEmrFgJvRZI2Ii_MGkBJY5vgzKyA5gpywotDJ7lGf5is44D-IfRBDM8mdviPMN_iMk0rQbpUaiYkOXk5ofq_cHj0aHHUK-Pq0qhD"
+                class="card-img-top" alt="...">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{poll.subject}}</h5>
+                <p class="card-text">
+                    {% if poll.detail|length > 100 %}
+                    {{poll.detail|slice:100}} .......
+                    {% else  %}
+                    {{poll.detail }}
+                    {% endif %}
+                </p>
+                <div class="btn-group" role="group" aria-label="Basic example">
+                    <button type="button" class="btn btn-success">vote</button>
+                    {% if user.id == poll.create_by.id %}
+                    <a href=""><button type="button" class="btn btn-primary">edit</button></a>
+                    <a href="{% url 'poll_delete' poll_id=poll.id %}"><button type="button" class="btn btn-danger">delete</button></a>
+                    {% endif %}
+                </div>
+                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<style>
+    .card-img-top {
+        max-width: 100%;
+        max-height: 100%;
+    }
+</style>
+
+
+{% endblock main %}
