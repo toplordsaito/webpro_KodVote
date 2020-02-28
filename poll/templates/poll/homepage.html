@@ -13,7 +13,7 @@
             <img src="{% static '' %}{{poll.picture}}" class="card-img-top" alt="...">
             <!-- <img src="{% static 'images/poll/images.jpg' %}" class="card-img-top" alt="..."> -->
             {% else %}
-            <img src="https://lh3.googleusercontent.com/proxy/TtZeaGXagEmrFgJvRZI2Ii_MGkBJY5vgzKyA5gpywotDJ7lGf5is44D-IfRBDM8mdviPMN_iMk0rQbpUaiYkOXk5ofq_cHj0aHHUK-Pq0qhD"
+            <img src="https://lh3.googleusercontent.com/proxy/5Xbd9YtWlSLvZnmZsFIUlHhKn7POD7hRqECnSCx_d4nR9Tte0spCSAS5vdBnmlhT1H7SBkCk10gPZpdbRAjTjpqu-SCfovuXM1v7MbOJ4yEc"
                 class="card-img-top" alt="...">
             {% endif %}
             <div class="card-body">
@@ -26,10 +26,13 @@
                     {% endif %}
                 </p>
                 <div class="btn-group" role="group" aria-label="Basic example">
-                    <button type="button" class="btn btn-success">vote</button>
+                    <a href="{% url 'poll_view' poll_id=poll.id %}"><button type="button"
+                            class="btn btn-success">vote</button></a>
                     {% if user.id == poll.create_by.id %}
-                    <a href=""><button type="button" class="btn btn-primary">edit</button></a>
-                    <a href="{% url 'poll_delete' poll_id=poll.id %}"><button type="button" class="btn btn-danger">delete</button></a>
+                    <a href="{% url 'poll_update' poll_id=poll.id %}"><button type="button"
+                            class="btn btn-primary">edit</button></a>
+                    <a href="{% url 'poll_delete' poll_id=poll.id %}"><button type="button"
+                            class="btn btn-danger">delete</button></a>
                     {% endif %}
                 </div>
                 <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>

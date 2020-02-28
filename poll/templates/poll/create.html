@@ -1,72 +1,97 @@
 {% extends "base.html" %}
 {% block main %}
 {% load static %}
-
 <div class="row">
-
     <div class="col-md-8 col-md-offset-2">
-
-        <h1>Create Poll</h1>
-        
-        <form action="{% url 'poll_create' %}" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="title">Subject <span class="require">*</span></label>
-                <input type="text" class="form-control" name="subject" />
-            </div>
-
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea rows="5" class="form-control" name="detail"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="description">start_date to</label>
-                <div class="input-daterange input-group" id="datepicker">
-                    <input type="datetime-local" class="input-sm form-control" name="start_date" />
-                    <span class="input-group-addon">to</span>
-                    <input type="datetime-local" class="input-sm form-control" name="end_date" />
+        <h1>{{title}}</h1>
+        {% if poll.id %}
+        <form action="{% url 'poll_update' poll_id=poll.id %}" method="post" enctype="multipart/form-data">
+            {% else %}
+            <form action="{% url 'poll_create' %}" method="post" enctype="multipart/form-data">
+                {% endif %}
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="title">Subject <span class="require">*</span></label>
+                    <input type="text" class="form-control" name="subject" value="{{poll.subject}}" />
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea rows="5" class="form-control" name="detail">{{poll.detail}}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="description">start_date to</label>
+                    <div class="input-daterange input-group" id="datepicker">
+                        <input type="datetime-local" class="input-sm form-control" name="start_date"
+                            value="{{poll.start_date}}" />
+                        <span class="input-group-addon">to</span>
+                        <input type="datetime-local" class="input-sm form-control" name="end_date"
+                            value="{{poll.end_date}}" />
+                    </div>
                 </div>
 
+                <div class="form-group">
+                    <label for="description">password</label>
+                    <input type="text" name="password" class="form-control" value="{{poll.password}}" />
+                </div>
+
+                <div class="form-group">
+                    {% if poll.picture %}
+                    {% load static %}
+                    <img id="preview" src="{% static '' %}{{poll.picture}}">
+                    {% else %}
+                    <img id="preview" src="#" style="display: none;" />
+                    {% endif %}
+                    <br>
+                    <label for="img">IMG</label>
+                    <input type="file" id="img" class="form-control" name="picture" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        {% if poll.id %}
+                        Update
+                        {% else %}
+                        Create
+                        {% endif %}
+                    </button>
+                    <a href="{%url 'home'%}">
+                        Cancel
+                    </a>
+
+                </div>
+            </form>
+    </div>
+    <div class="col">
+        {% if poll.id %}
+        {% for choice in choices %}
+        <div class="list-group">
+            <div class="list-group-item list-group-item-action">
+                <div class="row">
+                    <div class="col">{{choice.subject}}</div>
+                    <div class="col"><img id="preview" src="{% static '' %}{{choice.picture}}"></div>
+                    <div class="col">
+                        <a href="{% url 'choice_delete' choice_id=choice.id %}">
+                            <button type="button" class="btn btn-danger">Delete</button></div>
+                    </a>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="description">password</label>
-                <input type="text" name="password" class="form-control" />
-            </div>
-
-            <div class="form-group">
-                <img id="preview" src="#" style="display: none;" />
-                <br>
-                <label for="img">IMG</label>
-                <input type="file" id="img" name="picture" accept="image/*">
-            </div>
-
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">
-                    Create
-                </button>
-                <a href="{%url 'home'%}">
-                    Cancel
-                    <!-- <button class="btn">
-                            Cancel
-                        </button> -->
-                </a>
-
-            </div>
-
-        </form>
+        </div>
+        {% endfor %}
+        <div class="form-group">
+            {% include 'poll/choice_create.html' %}
+        </div>
+        {% endif %}
     </div>
 
 </div>
 <script>
-    function readURL(input) {
+    function readURL(input, where) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
 
             reader.onload = function (e) {
-                $('#preview').attr('src', e.target.result);
-                $('#preview').show();
+                where.attr('src', e.target.result);
+                where.show();
             }
 
             reader.readAsDataURL(input.files[0]);
@@ -74,7 +99,7 @@
     }
 
     $("#img").change(function () {
-        readURL(this);
+        readURL(this, $('#preview'));
     });
 
     // $('.input-daterange').datepicker({
@@ -83,4 +108,9 @@
     // });
 
 </script>
+<style>
+    img {
+        width: 100%;
+    }
+</style>
 {% endblock main %}

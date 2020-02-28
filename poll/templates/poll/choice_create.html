@@ -1,0 +1,22 @@
+<h2> Choice </h2>
+<form action="{% url 'choice_create' poll_id=poll.id %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <input type="text" name="subject" class="form-control" placeholder="Subject here">
+    </div>
+
+    <img id="previewChoice" src="#" style="display: none;" />
+
+    <div class="input-group mb-3">
+        <input type="file" id="imgChoice" class="form-control" name="picture" accept="image/*">
+        <div class="input-group-append">
+            <button class="btn btn-primary" type="submit" id="button-addon2">add new choice</button>
+        </div>
+    </div>
+</form>
+<script>
+    $("#imgChoice").change(function () {
+        readURL(this, $('#previewChoice'));
+    });
+</script>
