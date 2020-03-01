@@ -24,42 +24,50 @@
     {% endblock %}
 </head>
 
-<body>
+<body class="bg-warning">
 
     {% include 'header.html' %}
-    <div id="loading" class="container text-center">
-        <div class="spinner-grow text-primary" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-secondary" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-success" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-danger" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-warning" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-info" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-light" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <div class="spinner-grow text-dark" role="status">
-            <span class="sr-only">Loading...</span>
+    <div class="container bg-secondary">
+        <div id="loading" class="text-center" >
+            <div class="spinner-grow text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-secondary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-success" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-danger" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-warning" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-info" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-light" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div class="spinner-grow text-dark" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
         </div>
     </div>
-    <div class="container" id="main">
+    <div class="container bg-secondary" id="main">
         {% if msg %}
         <br />
         <div id="msg" class="alert alert-success" role="alert">
             {{msg}}
         </div>
         {% endif %}
+        <!-- {% if error %}
+        <br />
+        <div id="error" class="alert alert-danger" role="danger">
+            {{error}}
+        </div>
+        {% endif %} -->
         {% block main %}
         {% endblock %}
     </div>
@@ -72,6 +80,11 @@
             }, 500)
         });
     </script>
+    <style>
+        .bg-secondary{
+            background-color: aqua;
+        }
+    </style>
 </body>
 
 </html>

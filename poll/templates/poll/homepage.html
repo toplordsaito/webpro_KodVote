@@ -2,51 +2,47 @@
 {% block main %}
 
 <h1 class="text-center">{{title}}</h1>
-<a href="{% url 'poll_create' %}">create</a>
-<div class="card-deck">
-    {% for poll in polls %}
-    <div class="col-4 mb-4">
-        <div class="card">
-            {% if poll.picture %}
-            <!-- <img class="card-img-top" src="{{poll.picture}}" alt=""> -->
-            {% load static %}
-            <img src="{% static '' %}{{poll.picture}}" class="card-img-top" alt="...">
-            <!-- <img src="{% static 'images/poll/images.jpg' %}" class="card-img-top" alt="..."> -->
-            {% else %}
-            <img src="https://lh3.googleusercontent.com/proxy/5Xbd9YtWlSLvZnmZsFIUlHhKn7POD7hRqECnSCx_d4nR9Tte0spCSAS5vdBnmlhT1H7SBkCk10gPZpdbRAjTjpqu-SCfovuXM1v7MbOJ4yEc"
-                class="card-img-top" alt="...">
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">{{poll.subject}}</h5>
-                <p class="card-text">
-                    {% if poll.detail|length > 100 %}
-                    {{poll.detail|slice:100}} .......
-                    {% else  %}
-                    {{poll.detail }}
-                    {% endif %}
-                </p>
-                <div class="btn-group" role="group" aria-label="Basic example">
-                    <a href="{% url 'poll_view' poll_id=poll.id %}"><button type="button"
-                            class="btn btn-success">vote</button></a>
-                    {% if user.id == poll.create_by.id %}
-                    <a href="{% url 'poll_update' poll_id=poll.id %}"><button type="button"
-                            class="btn btn-primary">edit</button></a>
-                    <a href="{% url 'poll_delete' poll_id=poll.id %}"><button type="button"
-                            class="btn btn-danger">delete</button></a>
-                    {% endif %}
-                </div>
-                <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
-            </div>
-        </div>
+<div class="avaliable">
+    <h1>Avaliable</h1>
+    <div class="card-deck">
+        {% for poll in avaliable %}
+        {% if forloop.first %}<div class="row">{% endif %}
+            {% include "poll/block_poll_home.html" %}
+            {% if forloop.counter|divisibleby:3 %}</div>
+        <div class="row">{% endif %}
+            {% if forloop.last %}</div>{% endif %}
+        {% endfor %}
     </div>
-    {% endfor %}
-
 </div>
-
+<hr />
+<div class="closed">
+    <h1>Closed</h1>
+    <div class="card-deck">
+        {% for poll in closed %}
+        {% include "poll/block_poll_home.html" %}
+        {% endfor %}
+    </div>
+</div>
 <style>
+    img {
+        overflow: hidden;
+        width: auto;
+        height: 25vh;
+    }
+
     .card-img-top {
+        /* height: 30vh; */
         max-width: 100%;
         max-height: 100%;
+    }
+
+    .expire {
+        filter: grayscale(100%);
+    }
+
+    h1,
+    h2 {
+        color: aliceblue;
     }
 </style>
 

@@ -4,13 +4,20 @@ from .models import Poll, Poll_Choice, Poll_Vote
 from datetime import datetime
 from time import time
 from dateutil.parser import parse
+from django.views.decorators.http import require_POST
+import json
+import random
+import pytz
+utc = pytz.UTC
 # Create your views here.
 
 
 @login_required
 def home(request):
     polls = Poll.objects.all()
-    return render(request, 'poll/homepage.html', {'title': "Welcome to Poll App", 'polls': polls})
+    closed = polls.filter(end_date__lte=datetime.now().replace(tzinfo=utc))
+    avaliable = polls.filter(end_date__gt=datetime.now().replace(tzinfo=utc))
+    return render(request, 'poll/homepage.html', {'title': "Welcome to Poll App", 'closed': closed, 'avaliable': avaliable})
 
 
 @login_required
@@ -44,7 +51,11 @@ def createPoll(request):
 
 @login_required
 def updatePoll(request, poll_id):
-    poll = Poll.objects.get(pk=poll_id)
+    try:
+        poll = Poll.objects.get(pk=poll_id)
+    except Poll.DoesNotExist:
+        return redirect("home")
+
     context = {}
     if request.method == 'POST' and poll.create_by == request.user:
         poll.subject = request.POST.get('subject')
@@ -67,7 +78,11 @@ def updatePoll(request, poll_id):
 
 @login_required
 def deletePoll(request, poll_id):
-    poll = Poll.objects.get(pk=poll_id)
+    try:
+        poll = Poll.objects.get(pk=poll_id)
+    except Poll.DoesNotExist:
+        return redirect("home")
+
     if poll.create_by == request.user:
         poll.delete()
     return redirect(to='home')
@@ -75,7 +90,10 @@ def deletePoll(request, poll_id):
 
 @login_required
 def createChoice(request, poll_id):
-    poll = Poll.objects.get(pk=poll_id)
+    try:
+        poll = Poll.objects.get(pk=poll_id)
+    except Poll.DoesNotExist:
+        return redirect("home")
     if request.method == 'POST' and poll.create_by == request.user:
         subject = request.POST.get('subject')
         picture = request.FILES.get('picture', None)
@@ -90,15 +108,82 @@ def createChoice(request, poll_id):
 
 @login_required
 def deleteChoice(request, choice_id):
-    choice = Poll_Choice.objects.get(pk=choice_id)
+    try:
+        choice = Poll_Choice.objects.get(pk=choice_id)
+    except Poll_Choice.DoesNotExist:
+        return redirect("home")
+
     if choice.poll_id.create_by == request.user:
         choice.delete()
     return redirect(to='poll_update', poll_id=choice.poll_id.id)
 
 
 @login_required
-def viewPoll(request, poll_id):
-    return render(request, 'poll/view_poll.html')
+def viewPoll(request, poll_id, ignorePassword=False):
+    print(ignorePassword)
+    try:
+        poll = Poll.objects.get(pk=poll_id)
+    except Poll.DoesNotExist:
+        return redirect("home")
+    context = {'poll': poll}
+    if poll.password and not ignorePassword:
+        password = request.POST.get('password')
+        if not password:
+            return render(request, 'poll/password.html')
+        elif password != poll.password:
+            return render(request, 'poll/password.html', {"error": "password incorrect"})
+
+    choices = Poll_Choice.objects.filter(poll_id=poll_id)
+    context['choices'] = choices
+    if poll.is_expire:
+        context['answer'] = calAnswerPoll(choices)
+    try:
+        vote = Poll_Vote.objects.get(poll_id=poll_id, vote_by=request.user)
+        context['myChoice'] = vote
+    except Poll_Vote.DoesNotExist:
+        pass
+    return render(request, 'poll/view_poll.html', context)
+
+
+@login_required
+@require_POST
+def votePoll(request, poll_id):
+    choice = request.POST.get('choice')
+    try:
+        poll = Poll.objects.get(pk=poll_id)
+        choice = Poll_Choice.objects.get(pk=choice, poll_id=poll)
+    except Poll_Choice.DoesNotExist:
+        return redirect('home')
+    except Poll.DoesNotExist:
+        return redirect('home')
+    try:
+        vote = Poll_Vote.objects.get(vote_by=request.user, poll_id=poll)
+        vote.choice_id = choice
+        vote.save()
+    except Poll_Vote.DoesNotExist:
+        Poll_Vote.objects.create(vote_by=request.user,
+                                 poll_id=poll, choice_id=choice)
+    return viewPoll(request, poll_id, True)
+
+
+def calAnswerPoll(choices):
+    allScore = sum(i.getScore for i in choices)
+    data = []
+    label = []
+    color = []
+    ans = []
+    for choice in choices:
+        choiceScore = choice.getScore
+        data.append(choiceScore)
+        label.append(choice.subject)
+        color.append(
+            "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
+        ans.append({'choice': choice, 'score': choiceScore,
+                    'percent': choiceScore/allScore*100})
+    summary = {'data': data, 'label': label, 'color': color}
+    summary = json.dumps(summary,  ensure_ascii=False)
+    answer = {'summary': summary, 'ans': ans}
+    return answer
 
 
 def checkDate(dateString):

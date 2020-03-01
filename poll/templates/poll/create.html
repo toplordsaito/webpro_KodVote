@@ -26,6 +26,7 @@
                         <span class="input-group-addon">to</span>
                         <input type="datetime-local" class="input-sm form-control" name="end_date"
                             value="{{poll.end_date}}" />
+                            <!-- |date:'Y-m-d\TH:i:s' -->
                     </div>
                 </div>
 
@@ -67,7 +68,9 @@
             <div class="list-group-item list-group-item-action">
                 <div class="row">
                     <div class="col">{{choice.subject}}</div>
+                    {% if choice.picture %}
                     <div class="col"><img id="preview" src="{% static '' %}{{choice.picture}}"></div>
+                    {% endif %}
                     <div class="col">
                         <a href="{% url 'choice_delete' choice_id=choice.id %}">
                             <button type="button" class="btn btn-danger">Delete</button></div>
@@ -101,11 +104,6 @@
     $("#img").change(function () {
         readURL(this, $('#preview'));
     });
-
-    // $('.input-daterange').datepicker({
-    //     format: "dd-mm-yyyy",
-    //     startDate: Date()
-    // });
 
 </script>
 <style>

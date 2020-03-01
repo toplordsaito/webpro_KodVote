@@ -1,6 +1,139 @@
 {% extends "base.html" %}
 {% block main %}
-<div>
-
+<div class="row">
+    <div class="col-8">
+        <h1 class="text-center">{{poll.subject}}</h1>
+        {% if poll.picture %}
+        {% load static %}
+        <img src="{% static '' %}{{poll.picture}}">
+        {% endif %}
+        <h2>{{poll.detail}}</h2>
+        <h5>****หมายเหตุ 1 คนโหวตได้ 1 ครั้งหากต้องการเลือกใหม่สามารถกด Vote ได้เรื่อยๆ</h5>
+    </div>
+    <div class="col">
+        <div id="choice_area">
+            <form action="{% url 'poll_vote' poll_id=poll.id %}" id="ChoiceForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="choice" id="choiceSelected">
+                {% if not choices %}
+                <div class="alert alert-danger" role="alert">
+                    Empty Choice Now
+                </div>
+                {% endif %}
+                <div class="list-group">
+                    {% for choice in choices %}
+                    <div class="input-group list-group-item list-group-item-action {% if myChoice.choice_id.id == choice.id %}
+                    active
+                    {% endif %}" id="{{choice.id}}" onclick="selectChoice(this)">
+                        <div class="row">
+                            <div class="col">
+                                <p class="">{{choice.subject}}</p>
+                            </div>
+                            {% if choice.picture %}
+                            {% load static %}
+                            <div class="col">
+                                <img src="{% static '' %}{{choice.picture}}">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+<input id="json" type="hidden" value="{{answer.summary}}">
+<script>
+    function selectChoice(choice) {
+        $("#choiceSelected").val(choice.id)
+        $("#ChoiceForm").submit();
+    }
+</script>
+<style>
+    img {
+        width: 100%;
+    }
+</style>
+
+
+
+{% if answer %}
+<div class="row">
+    <div class="col">
+        <div width="40vh" height="40vh">
+            <canvas id="myChart1"></canvas>
+        </div>
+        <div width="40vh" height="40vh">
+            <canvas id="myChart2"></canvas>
+        </div>
+    </div>
+    <div class="col">
+        {% for ans in answer.ans %}
+        <div class="card mb-3" style="max-width: 540px;">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img class="card-img" src="{% static '' %}{{ans.choice.picture}}">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ans.score}} Vote</h5>
+                        <p class="card-text">{{ans.choice.subject}}</p>
+                        <p class="card-text"><small class="text-muted">คิดเป็น {{ans.percent}} % จากทั้งหมด</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<script src="{% static 'js/Chart.min.js' %}"></script>
+<script>
+    let answer = $('#json').val()
+    answer = JSON.parse(answer)
+    let score = answer.data
+    let subject = answer.label
+    let backgroundColor = answer.color
+    data = {
+        labels: subject,
+        datasets: [{
+            label: '# of Votes',
+            data: score,
+            backgroundColor: backgroundColor,
+            borderWidth: 1
+        }]
+    }
+    let options = {
+        title: {
+            display: true,
+            text: 'Custom Chart Title',
+            fontColor: 'black',
+            fontSize: 25
+        },
+        responsive: true,
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true
+                }
+            }]
+        },
+        legend: {
+            labels: {
+                // This more specific font property overrides the global property
+                fontColor: 'black',
+                fontSize: 20
+            }
+        }
+    }
+    var ctx1 = document.getElementById('myChart1').getContext('2d');
+    var myChart2 = new Chart(ctx1, {
+        type: 'pie',
+        data,
+        options
+    });
+
+</script>
+{% endif %}
+
 {% endblock main %}
