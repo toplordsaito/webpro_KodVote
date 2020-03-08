@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.utils.timezone import now, localtime, _get_timezone_name
 from datetime import datetime
 import pytz
+import json
+import random
 utc = pytz.UTC
 
 
@@ -15,10 +17,11 @@ class Poll(models.Model):
     password = models.CharField(max_length=32, null=True)
     create_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     create_date = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=False)
 
     @property
     def is_expire(self):
-        return datetime.now().replace(tzinfo=utc) > self.end_date
+        return (datetime.now().replace(tzinfo=utc) > self.end_date) or self.is_active
 
     @property
     def get_timeleft(self):
@@ -38,6 +41,28 @@ class Poll(models.Model):
             string += str(dif) + " วินาที"
         return string
 
+    @property
+    def getAnswerPoll(self):
+        choices = Poll_Choice.objects.filter(poll_id=self.id)
+        allScore = sum(i.getScore for i in choices)
+        allScore = max(1, allScore)
+        data = []
+        label = []
+        color = []
+        ans = []
+        for choice in choices:
+            choiceScore = choice.getScore
+            data.append(choiceScore)
+            label.append(choice.subject)
+            color.append(
+                "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
+            ans.append({'choice': choice, 'score': choiceScore,
+                        'percent': choiceScore/allScore*100})
+        summary = {'data': data, 'label': label, 'color': color}
+        summary = json.dumps(summary,  ensure_ascii=False)
+        answer = {'summary': summary, 'ans': ans}
+        return answer
+
     class Meta:
         ordering = ['-end_date']
 
@@ -55,6 +80,5 @@ class Poll_Choice(models.Model):
 
 class Poll_Vote(models.Model):
     poll_id = models.ForeignKey(Poll, on_delete=models.CASCADE)
-    choice_id = models.ForeignKey(
-        Poll_Choice, on_delete=models.CASCADE, null=True)
+    choice_id = models.ForeignKey(Poll_Choice, on_delete=models.CASCADE, null=True)
     vote_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)

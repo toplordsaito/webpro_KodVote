@@ -5,44 +5,40 @@ from datetime import datetime
 from time import time
 from dateutil.parser import parse
 from django.views.decorators.http import require_POST
-import json
-import random
 import pytz
 utc = pytz.UTC
 # Create your views here.
 
 
 @login_required
-def home(request):
-    polls = Poll.objects.all()
+def home(request, **kwargs):
+    if not kwargs.get('polls'):
+        polls = Poll.objects.all()
+    else:
+        polls = kwargs['polls']
     closed = polls.filter(end_date__lte=datetime.now().replace(tzinfo=utc))
     avaliable = polls.filter(end_date__gt=datetime.now().replace(tzinfo=utc))
-    return render(request, 'poll/homepage.html', {'title': "Welcome to Poll App", 'closed': closed, 'avaliable': avaliable})
+    context = {}
+    context['title'] = kwargs.get('title') or "Welcome to Poll App"
+    context['closed'] = closed
+    context['avaliable'] = avaliable
+    return render(request, 'poll/homepage.html', context)
 
 
 @login_required
 def user_poll(request):
     polls = Poll.objects.filter(create_by=request.user)
-    return render(request, 'poll/homepage.html', {'title': "My Poll", 'polls': polls})
+    return home(request, polls=polls, title="My Polls")
 
 
 @login_required
 def createPoll(request):
     context = {'title': 'Create Poll'}
     if request.method == 'POST':
-        subject = request.POST.get('subject')
-        detail = request.POST.get('detail')
-        start_date = checkDate(request.POST.get('start_date'))
-        end_date = checkDate(request.POST.get('end_date'))
-        password = request.POST.get('password', None)
-        picture = request.FILES.get('picture', None)
-        # rename picture
-        if picture:
-            ext = '.' + picture.name.split('.')[-1]
-            picture.name = str(time()) + ext
-
-        poll = Poll.objects.create(subject=subject, detail=detail, start_date=start_date,
-                                   end_date=end_date, password=password, create_by=request.user, picture=picture)
+        poll = Poll()
+        poll = checkPoll(poll, request)
+        poll.create_by = request.user
+        poll.save()
         context['title'] = "Update Poll"
         context['msg'] = "Create Successfuly"
         context['poll'] = poll
@@ -55,19 +51,9 @@ def updatePoll(request, poll_id):
         poll = Poll.objects.get(pk=poll_id)
     except Poll.DoesNotExist:
         return redirect("home")
-
     context = {}
     if request.method == 'POST' and poll.create_by == request.user:
-        poll.subject = request.POST.get('subject')
-        poll.detail = request.POST.get('detail')
-        poll.start_date = checkDate(request.POST.get('start_date'))
-        poll.end_date = checkDate(request.POST.get('end_date'))
-        poll.password = request.POST.get('password')
-        picture = request.FILES.get('picture', None)
-        if picture:
-            ext = '.' + picture.name.split('.')[-1]
-            picture.name = str(time()) + ext
-            poll.picture = picture
+        poll = checkPoll(poll, request)
         poll.save()
         context['msg'] = "Update Successfuly"
     context['title'] = 'Update Poll'
@@ -120,11 +106,11 @@ def deleteChoice(request, choice_id):
 
 @login_required
 def viewPoll(request, poll_id, ignorePassword=False):
-    print(ignorePassword)
     try:
         poll = Poll.objects.get(pk=poll_id)
     except Poll.DoesNotExist:
         return redirect("home")
+
     context = {'poll': poll}
     if poll.password and not ignorePassword:
         password = request.POST.get('password')
@@ -136,7 +122,7 @@ def viewPoll(request, poll_id, ignorePassword=False):
     choices = Poll_Choice.objects.filter(poll_id=poll_id)
     context['choices'] = choices
     if poll.is_expire:
-        context['answer'] = calAnswerPoll(choices)
+        context['answer'] = poll.getAnswerPoll
     try:
         vote = Poll_Vote.objects.get(poll_id=poll_id, vote_by=request.user)
         context['myChoice'] = vote
@@ -151,6 +137,8 @@ def votePoll(request, poll_id):
     choice = request.POST.get('choice')
     try:
         poll = Poll.objects.get(pk=poll_id)
+        if poll.is_expire:
+            return redirect('home')
         choice = Poll_Choice.objects.get(pk=choice, poll_id=poll)
     except Poll_Choice.DoesNotExist:
         return redirect('home')
@@ -163,27 +151,20 @@ def votePoll(request, poll_id):
     except Poll_Vote.DoesNotExist:
         Poll_Vote.objects.create(vote_by=request.user,
                                  poll_id=poll, choice_id=choice)
-    return viewPoll(request, poll_id, True)
+    return viewPoll(request, poll_id, ignorePassword=True)
 
-
-def calAnswerPoll(choices):
-    allScore = sum(i.getScore for i in choices)
-    data = []
-    label = []
-    color = []
-    ans = []
-    for choice in choices:
-        choiceScore = choice.getScore
-        data.append(choiceScore)
-        label.append(choice.subject)
-        color.append(
-            "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
-        ans.append({'choice': choice, 'score': choiceScore,
-                    'percent': choiceScore/allScore*100})
-    summary = {'data': data, 'label': label, 'color': color}
-    summary = json.dumps(summary,  ensure_ascii=False)
-    answer = {'summary': summary, 'ans': ans}
-    return answer
+def checkPoll(poll, request):
+    poll.subject = request.POST.get('subject')
+    poll.detail = request.POST.get('detail')
+    poll.start_date = checkDate(request.POST.get('start_date'))
+    poll.end_date = checkDate(request.POST.get('end_date'))
+    poll.password = request.POST.get('password')
+    picture = request.FILES.get('picture', None)
+    if picture:
+        ext = '.' + picture.name.split('.')[-1]
+        picture.name = str(time()) + ext
+        poll.picture = picture
+    return poll
 
 
 def checkDate(dateString):
