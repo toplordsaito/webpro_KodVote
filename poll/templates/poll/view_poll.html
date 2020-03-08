@@ -24,7 +24,8 @@
                     {% for choice in choices %}
                     <div class="input-group list-group-item list-group-item-action {% if myChoice.choice_id.id == choice.id %}
                     active
-                    {% endif %}" id="{{choice.id}}" onclick="selectChoice(this)">
+                    {% endif %}" id="{{choice.id}}" {% if not poll.is_expire %} onclick="selectChoice(this)"
+                        {% endif %}>
                         <div class="row">
                             <div class="col">
                                 <p class="">{{choice.subject}}</p>
@@ -72,9 +73,12 @@
         {% for ans in answer.ans %}
         <div class="card mb-3" style="max-width: 540px;">
             <div class="row no-gutters">
+                {% if ans.choice.picture %}
                 <div class="col-md-4">
                     <img class="card-img" src="{% static '' %}{{ans.choice.picture}}">
                 </div>
+                {% endif %}
+
                 <div class="col-md-8">
                     <div class="card-body">
                         <h5 class="card-title">{{ans.score}} Vote</h5>
@@ -106,7 +110,7 @@
     let options = {
         title: {
             display: true,
-            text: 'Custom Chart Title',
+            text: 'Result of Poll',
             fontColor: 'black',
             fontSize: 25
         },

@@ -27,12 +27,13 @@ class Poll(models.Model):
     def get_timeleft(self):
         now = datetime.now().replace(tzinfo=utc)
         dif = self.end_date - now
+        day = dif.days
         dif = dif.seconds
         string = "สิ้นสุดในอีก "
+        if day > 0:
+            string += str(day) + " วัน"
         if now > self.end_date:
             string = "โพลสิ้นสุดแล้ว"
-        elif dif > 86400:
-            string += str(dif//86400) + " วัน"
         elif dif > 3600:
             string += str(dif//3600) + " ชั่วโมง"
         elif dif > 60:
@@ -80,5 +81,6 @@ class Poll_Choice(models.Model):
 
 class Poll_Vote(models.Model):
     poll_id = models.ForeignKey(Poll, on_delete=models.CASCADE)
-    choice_id = models.ForeignKey(Poll_Choice, on_delete=models.CASCADE, null=True)
+    choice_id = models.ForeignKey(
+        Poll_Choice, on_delete=models.CASCADE, null=True)
     vote_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)

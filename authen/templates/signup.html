@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -9,7 +9,7 @@
 
 <body>
     <form action="" method="POST">
-        {% csrf_token %} {{form}}
+        
         <button type="submit"> submit</button>
     </form>
 
@@ -17,4 +17,62 @@
     <input type="text" name="password"> </input>
 </body>
 
-</html>
+</html> -->
+{% extends "base.html" %}
+{% block main %}
+<div class="regis">
+    <h1>Register</h1>
+    <form action="" method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="exampleInputEmail1">Username</label>
+            <input type="text" class="form-control form-control-lg" name="username" placeholder="Enter username"
+                required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control form-control-lg" name="password1" placeholder="Password"
+                required>
+        </div>
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" class="form-control form-control-lg" name="password2" placeholder="Confirm Password"
+                required>
+        </div>
+        <div class="form-group">
+            <label>Firstname</label>
+            <input type="text" class="form-control form-control-lg" name="firstname"
+                placeholder="your firstname ex. somchai">
+        </div>
+        <div class="form-group">
+            <label>Lastname</label>
+            <input type="text" class="form-control form-control-lg" name="lastname"
+                placeholder="your lastname ex. chainaksu">
+        </div>
+        <div class="form-group">
+            <label for="exampleInputEmail1">Email address</label>
+            <input type="email" class="form-control form-control-lg" name="email" placeholder="Enter email">
+            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+        <div class="form-group">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" required>
+                <label class="form-check-label" for="invalidCheck3">
+                    Agree to terms and conditions
+                </label>
+                <div class="invalid-feedback">
+                    You must agree before submitting.
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </form>
+</div>
+<style>
+    .regis {
+        background-color: antiquewhite;
+    }
+</style>
+{% endblock main %}

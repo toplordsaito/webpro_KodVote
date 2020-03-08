@@ -12,7 +12,7 @@ utc = pytz.UTC
 
 @login_required
 def home(request, **kwargs):
-    if not kwargs.get('polls'):
+    if kwargs.get('polls') == None:
         polls = Poll.objects.all()
     else:
         polls = kwargs['polls']
@@ -152,6 +152,7 @@ def votePoll(request, poll_id):
         Poll_Vote.objects.create(vote_by=request.user,
                                  poll_id=poll, choice_id=choice)
     return viewPoll(request, poll_id, ignorePassword=True)
+
 
 def checkPoll(poll, request):
     poll.subject = request.POST.get('subject')

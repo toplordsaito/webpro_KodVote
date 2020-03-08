@@ -24,11 +24,10 @@
     {% endblock %}
 </head>
 
-<body class="bg-warning">
-
+<body class="bg-secondary">
     {% include 'header.html' %}
-    <div class="container bg-secondary">
-        <div id="loading" class="text-center" >
+    <div class="container content-area">
+        <div id="loading" class="text-center">
             <div class="spinner-grow text-primary" role="status">
                 <span class="sr-only">Loading...</span>
             </div>
@@ -55,19 +54,19 @@
             </div>
         </div>
     </div>
-    <div class="container bg-secondary" id="main">
+    <div class="container content-area" id="main">
         {% if msg %}
         <br />
         <div id="msg" class="alert alert-success" role="alert">
             {{msg}}
         </div>
         {% endif %}
-        <!-- {% if error %}
+        {% if error %}
         <br />
         <div id="error" class="alert alert-danger" role="danger">
             {{error}}
         </div>
-        {% endif %} -->
+        {% endif %}
         {% block main %}
         {% endblock %}
     </div>
@@ -81,8 +80,8 @@
         });
     </script>
     <style>
-        .bg-secondary{
-            background-color: aqua;
+        .content-area {
+            background-color: antiquewhite;
         }
     </style>
 </body>
