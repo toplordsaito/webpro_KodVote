@@ -1,96 +1,121 @@
 {% extends "base.html" %}
 {% block main %}
-<div class="row">
-    <div class="col-8">
-        <h1 class="text-center">{{poll.subject}}</h1>
-        {% if poll.picture %}
-        {% load static %}
-        <img src="{% static '' %}{{poll.picture}}">
-        {% endif %}
-        <h2>{{poll.detail}}</h2>
-        <h5>****หมายเหตุ 1 คนโหวตได้ 1 ครั้งหากต้องการเลือกใหม่สามารถกด Vote ได้เรื่อยๆ</h5>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1 class="text-center">{{poll.subject}}</h1>
+            {% if poll.picture %}
+            {% load static %}
+            <img src="{{poll.picture.url}}">
+            {% endif %}
+            <h2>{{poll.detail}}</h2>
+            <h5>****หมายเหตุ 1 คนโหวตได้ 1 ครั้งเท่านั้น</h5>
+            <h6>{{poll.get_timeleft}}</h6>
+        </div>
     </div>
-    <div class="col">
-        <div id="choice_area">
-            <form action="{% url 'poll_vote' poll_id=poll.id %}" id="ChoiceForm" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="choice" id="choiceSelected">
-                {% if not choices %}
-                <div class="alert alert-danger" role="alert">
-                    Empty Choice Now
-                </div>
-                {% endif %}
-                <div class="list-group">
-                    {% for choice in choices %}
-                    <div class="input-group list-group-item list-group-item-action {% if myChoice.choice_id.id == choice.id %}
-                    active
-                    {% endif %}" id="{{choice.id}}" {% if not poll.is_expire %} onclick="selectChoice(this)"
-                        {% endif %}>
-                        <div class="row">
-                            <div class="col">
-                                <p class="">{{choice.subject}}</p>
-                            </div>
-                            {% if choice.picture %}
-                            {% load static %}
-                            <div class="col">
-                                <img src="{% static '' %}{{choice.picture}}">
-                            </div>
-                            {% endif %}
-                        </div>
+    <div class="row">
+        <div class="col">
+            <div id="choice_area" class="container">
+                <form action="{% url 'poll_vote' poll_id=poll.id %}" id="ChoiceForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="choice" id="choiceSelected">
+                    {% if not choices %}
+                    <div class="alert alert-danger" role="alert">
+                        Empty Choice Now
                     </div>
-                    {% endfor %}
-                </div>
-            </form>
+                    {% endif %}
+                    <div class="container">
+                        <div class="row text-center">
+                            {% for choice in choices %}
+                            <div class="col-5 card
+                            {% if myChoice.choice_id.id == choice.id %}activeChoice{% endif %}" id="{{choice.id}}"
+                                {% if not myChoice %} onclick="selectChoice(this)" {% endif %}>
+                                <label class="form-check-label" for="choice">
+                                    {{choice.subject}}
+                                </label>
+                                {% if choice.picture %}
+                                <img width="500px" height="500px" class="card-choice" src="{{choice.picture.url}}">
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if not myChoice and not poll.is_expire %}
+                        <button type="submit" class="btn btn-success">Vote</button>
+                        {% endif %}
+
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-<input id="json" type="hidden" value="{{answer.summary}}">
-<script>
-    function selectChoice(choice) {
-        $("#choiceSelected").val(choice.id)
-        $("#ChoiceForm").submit();
-    }
-</script>
-<style>
-    img {
-        width: 100%;
-    }
-</style>
+
+    <input id="json" type="hidden" value="{{answer.summary}}">
+    <script>
+        let old = ""
+        function selectChoice(choice) {
+            if (old) {
+                old.className = "col-5 card"
+            }
+            $("#choiceSelected").val(choice.id)
+            choice.className = "col-5 card activeChoice"
+            old = choice
+        }
+    </script>
+    <style>
+        .activeChoice {
+            background-color: red;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        .card {
+            margin: 10px;
+        }
+
+        .card-choice {
+            object-fit: cover;
+        }
+    </style>
 
 
 
-{% if answer %}
-<div class="row">
-    <div class="col">
-        <div width="40vh" height="40vh">
-            <canvas id="myChart1"></canvas>
+    {% if answer %}
+    <div class="row">
+        <div class="col">
+            <div width="40vh" height="40vh">
+                <canvas id="myChart1"></canvas>
+            </div>
+            <div width="40vh" height="40vh">
+                <canvas id="myChart2"></canvas>
+            </div>
         </div>
-        <div width="40vh" height="40vh">
-            <canvas id="myChart2"></canvas>
-        </div>
-    </div>
-    <div class="col">
-        {% for ans in answer.ans %}
-        <div class="card mb-3" style="max-width: 540px;">
-            <div class="row no-gutters">
-                {% if ans.choice.picture %}
-                <div class="col-md-4">
-                    <img class="card-img" src="{% static '' %}{{ans.choice.picture}}">
-                </div>
-                {% endif %}
+        <div class="col">
+            {% for ans in answer.ans %}
+            <div class="card mb-3" style="max-width: 540px;">
+                <div class="row no-gutters">
+                    {% if ans.choice.picture %}
+                    <div class="col-md-6">
+                        <img class="card-img" src="{{ans.choice.picture.url}}">
+                    </div>
+                    {% endif %}
 
-                <div class="col-md-8">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ans.score}} Vote</h5>
-                        <p class="card-text">{{ans.choice.subject}}</p>
-                        <p class="card-text"><small class="text-muted">คิดเป็น {{ans.percent}} % จากทั้งหมด</small></p>
+                    <div class="col-md-6">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ans.score}} Vote</h5>
+                            <p class="card-text">{{ans.choice.subject}}</p>
+                            <p class="card-text"><small class="text-muted">คิดเป็น {{ans.percent}} % จากทั้งหมด</small>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 </div>
+
 <script src="{% static 'js/Chart.min.js' %}"></script>
 <script>
     let answer = $('#json').val()

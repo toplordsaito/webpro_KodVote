@@ -1,13 +1,11 @@
-from django.shortcuts import render, HttpResponseRedirect, redirect
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Poll, Poll_Choice, Poll_Vote
 from datetime import datetime
 from time import time
 from dateutil.parser import parse
 from django.views.decorators.http import require_POST
-import pytz
-utc = pytz.UTC
-# Create your views here.
+from django.db.models import Q
 
 
 @login_required
@@ -16,8 +14,8 @@ def home(request, **kwargs):
         polls = Poll.objects.all()
     else:
         polls = kwargs['polls']
-    closed = polls.filter(end_date__lte=datetime.now().replace(tzinfo=utc))
-    avaliable = polls.filter(end_date__gt=datetime.now().replace(tzinfo=utc))
+    closed = polls.filter(Q(end_date__lte=datetime.now()) | Q(is_active=False))
+    avaliable = polls.filter(end_date__gt=datetime.now(), is_active=True)
     context = {}
     context['title'] = kwargs.get('title') or "Welcome to Poll App"
     context['closed'] = closed
@@ -42,7 +40,7 @@ def createPoll(request):
         context['title'] = "Update Poll"
         context['msg'] = "Create Successfuly"
         context['poll'] = poll
-    return render(request, 'poll/create.html', context)
+    return render(request, 'poll/poll_form.html', context)
 
 
 @login_required
@@ -59,7 +57,7 @@ def updatePoll(request, poll_id):
     context['title'] = 'Update Poll'
     context['poll'] = poll
     context['choices'] = Poll_Choice.objects.filter(poll_id=poll_id)
-    return render(request, 'poll/create.html', context)
+    return render(request, 'poll/poll_form.html', context)
 
 
 @login_required
@@ -105,19 +103,13 @@ def deleteChoice(request, choice_id):
 
 
 @login_required
-def viewPoll(request, poll_id, ignorePassword=False):
+def viewPoll(request, poll_id):
     try:
         poll = Poll.objects.get(pk=poll_id)
     except Poll.DoesNotExist:
         return redirect("home")
 
     context = {'poll': poll}
-    if poll.password and not ignorePassword:
-        password = request.POST.get('password')
-        if not password:
-            return render(request, 'poll/password.html')
-        elif password != poll.password:
-            return render(request, 'poll/password.html', {"error": "password incorrect"})
 
     choices = Poll_Choice.objects.filter(poll_id=poll_id)
     context['choices'] = choices
@@ -144,6 +136,15 @@ def votePoll(request, poll_id):
         return redirect('home')
     except Poll.DoesNotExist:
         return redirect('home')
+    if poll.password:
+        password = request.POST.get('password')
+        context = {'choice': choice}
+        if not password:
+            return render(request, 'poll/password.html', context)
+        elif password != poll.password:
+            context['error'] = "password incorrect"
+            return render(request, 'poll/password.html', context)
+
     try:
         vote = Poll_Vote.objects.get(vote_by=request.user, poll_id=poll)
         vote.choice_id = choice
@@ -151,7 +152,8 @@ def votePoll(request, poll_id):
     except Poll_Vote.DoesNotExist:
         Poll_Vote.objects.create(vote_by=request.user,
                                  poll_id=poll, choice_id=choice)
-    return viewPoll(request, poll_id, ignorePassword=True)
+    # return viewPoll(request, poll_id)
+    return redirect('poll_view', poll_id=poll_id)
 
 
 def checkPoll(poll, request):
@@ -160,6 +162,7 @@ def checkPoll(poll, request):
     poll.start_date = checkDate(request.POST.get('start_date'))
     poll.end_date = checkDate(request.POST.get('end_date'))
     poll.password = request.POST.get('password')
+    poll.is_active = request.POST.get('is_active') == "True"
     picture = request.FILES.get('picture', None)
     if picture:
         ext = '.' + picture.name.split('.')[-1]
@@ -170,7 +173,8 @@ def checkPoll(poll, request):
 
 def checkDate(dateString):
     try:
-        parse(dateString)
+        dateString = parse(dateString)
+        # print(date)
     except ValueError:
-        dateString = datetime.now().isoformat(timespec='minutes')
+        dateString = datetime.now()  # .isoformat(timespec='minutes')
     return dateString

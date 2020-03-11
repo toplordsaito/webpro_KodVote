@@ -31,14 +31,22 @@ def signup(request):
     if request.user.is_authenticated:
         return HttpResponseRedirect('/')
     if request.method == 'POST':
-        user, context = checkUser(request.POST)
+        data = {
+            'username': request.POST['username'],
+            'password1': request.POST['password1'],
+            'password2': request.POST['password2'],
+            'firstname': request.POST['firstname'],
+            'lastname': request.POST['lastname'],
+            'email': request.POST['email'],
+        }
+        user, context = checkUser(data)
         if user:
             user = authenticate(
                 username=request.POST['username'], password=request.POST['password1'])
             login(request, user)
             return HttpResponseRedirect('/')
         else:
-            context.update(request.POST)
+            context.update(data)
             return render(request, 'signup.html', context)
     else:
         return render(request, 'signup.html')
@@ -48,8 +56,8 @@ def checkUser(form):
     user = User()
     context = {}
     user.username = form.get('username')
-    user.firstname = form.get('firstname')
-    user.lastname = form.get('lastname')
+    user.first_name = form.get('firstname')
+    user.last_name = form.get('lastname')
     user.email = form.get('email')
     password1 = form.get('password1')
     password2 = form.get('password2')

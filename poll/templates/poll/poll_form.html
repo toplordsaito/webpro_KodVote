@@ -31,6 +31,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="exampleFormControlSelect1">สถานะโพล</label>
+                    <select class="form-control" name="is_active">
+                        <option value="False" selected>Deactive</option>
+                        <option value="True" {% if poll.is_active  %} selected {% endif %}>Active</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label for="description">password</label>
                     <input type="text" name="password" class="form-control" value="{{poll.password}}" />
                 </div>

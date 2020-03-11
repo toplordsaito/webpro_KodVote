@@ -1,11 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils.timezone import now, localtime, _get_timezone_name
+from django.utils.timezone import now
 from datetime import datetime
-import pytz
 import json
 import random
-utc = pytz.UTC
 
 
 class Poll(models.Model):
@@ -17,29 +15,30 @@ class Poll(models.Model):
     password = models.CharField(max_length=32, null=True)
     create_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     create_date = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
     @property
     def is_expire(self):
-        return (datetime.now().replace(tzinfo=utc) > self.end_date) or self.is_active
+        return (datetime.now() > self.end_date) or not self.is_active
 
     @property
     def get_timeleft(self):
-        now = datetime.now().replace(tzinfo=utc)
+        now = datetime.now()
         dif = self.end_date - now
         day = dif.days
         dif = dif.seconds
-        string = "สิ้นสุดในอีก "
-        if day > 0:
-            string += str(day) + " วัน"
-        if now > self.end_date:
+        if self.is_expire:
             string = "โพลสิ้นสุดแล้ว"
-        elif dif > 3600:
-            string += str(dif//3600) + " ชั่วโมง"
-        elif dif > 60:
-            string += str(dif//60) + " นาที"
         else:
-            string += str(dif) + " วินาที"
+            string = "สิ้นสุดในอีก "
+            if day > 0:
+                string += str(day) + " วัน"
+            elif dif > 3600:
+                string += str(dif//3600) + " ชั่วโมง"
+            elif dif > 60:
+                string += str(dif//60) + " นาที"
+            else:
+                string += str(dif) + " วินาที"
         return string
 
     @property
@@ -58,7 +57,7 @@ class Poll(models.Model):
             color.append(
                 "#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]))
             ans.append({'choice': choice, 'score': choiceScore,
-                        'percent': choiceScore/allScore*100})
+                        'percent': int(choiceScore/allScore*100)})
         summary = {'data': data, 'label': label, 'color': color}
         summary = json.dumps(summary,  ensure_ascii=False)
         answer = {'summary': summary, 'ans': ans}
